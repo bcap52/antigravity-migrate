@@ -184,6 +184,12 @@ def run_restoration(
         if is_automated and src_ws.exists():
             shutil.copytree(src_ws, target_p_obj, dirs_exist_ok=True)
             print(f"       [OK] Extracted workspace: {pname} (.git preserved)")
+
+        # If manual mode bundled local project configs (.agent, .gemini, local skills), extract them
+        src_pcfg = archive_dir / "project_configs" / pid
+        if src_pcfg.exists():
+            shutil.copytree(src_pcfg, target_p_obj, dirs_exist_ok=True)
+            print(f"       [OK] Restored local project configs for: {pname} (.agent, .gemini, local skills)")
             
         # Write project JSON
         pjson_data = {

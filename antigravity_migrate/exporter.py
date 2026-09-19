@@ -217,7 +217,7 @@ def export_migration_bundle(
                         zip_rel = os.path.join(f"chats/brain/{cid}", rel, f) if rel != "." else os.path.join(f"chats/brain/{cid}", f)
                         zipf.write(full_p, zip_rel)
 
-        # 6. Package Workspaces (if Automated Mode)
+        # 6. Package Workspaces & Local Project Configs
         if mode == "automated":
             report("Packaging project workspaces (.git and local configs preserved)...", 0.75)
             for j, pid in enumerate(pids_to_export, 1):
@@ -236,6 +236,27 @@ def export_migration_bundle(
                                 zipf.write(full_p, zip_rel)
                             except Exception:
                                 pass
+        elif mode == "manual":
+            report("Packaging local project configs (.agent, .gemini, local skills & rules)...", 0.75)
+            for j, pid in enumerate(pids_to_export, 1):
+                pinfo = discovery["projects"].get(pid, {})
+                loc_path = pinfo.get("local_path")
+                if loc_path and os.path.exists(loc_path) and os.path.isdir(loc_path):
+                    for cfg_name in [".agent", ".gemini", ".mcp.json", "mcp.json", "AGENTS.md", "GEMINI.md"]:
+                        cfg_target = os.path.join(loc_path, cfg_name)
+                        if os.path.exists(cfg_target):
+                            if os.path.isdir(cfg_target):
+                                for root, dirs, files in os.walk(cfg_target):
+                                    rel = os.path.relpath(root, loc_path)
+                                    for f in files:
+                                        full_p = os.path.join(root, f)
+                                        zip_rel = os.path.join(f"project_configs/{pid}", rel, f)
+                                        try:
+                                            zipf.write(full_p, zip_rel)
+                                        except Exception:
+                                            pass
+                            else:
+                                zipf.write(cfg_target, f"project_configs/{pid}/{cfg_name}")
 
     report(f"Export completed: {out_path.stat().st_size / 1024 / 1024:.2f} MB", 1.0)
     
