@@ -146,6 +146,14 @@ def run_export_wizard():
     zip_path_input = input(f"\nOutput zip path [{default_zip_path}]: ").strip()
     zip_path = zip_path_input if zip_path_input else default_zip_path
     
+    p = Path(zip_path).expanduser()
+    if p.is_dir() or zip_path.endswith(("/", "\\")):
+        zip_path = str(p / default_zip_name)
+    elif not zip_path.lower().endswith(".zip"):
+        zip_path = f"{zip_path}.zip"
+        
+    print(f" Target File   : {zip_path}")
+    
     print("\n" + "=" * 80)
     print(" PACKAGING MIGRATION ARCHIVE")
     print("=" * 80)
@@ -159,14 +167,22 @@ def run_export_wizard():
         if pct >= 1.0:
             sys.stdout.write("\n")
             
-    res = export_migration_bundle(
-        output_zip_path=zip_path,
-        mode=mode,
-        target_intent=target_intent,
-        selected_cids=selected_cids,
-        selected_pids=selected_pids,
-        progress_cb=on_progress
-    )
+    try:
+        res = export_migration_bundle(
+            output_zip_path=zip_path,
+            mode=mode,
+            target_intent=target_intent,
+            selected_cids=selected_cids,
+            selected_pids=selected_pids,
+            progress_cb=on_progress
+        )
+    except Exception as e:
+        print(f"\n\n [ERROR] Failed to export archive: {e}")
+        try:
+            input("\nPress Enter to exit...")
+        except Exception:
+            pass
+        sys.exit(1)
     
     print("-" * 80)
     print(f" [SUCCESS] Migration archive created successfully!")

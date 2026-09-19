@@ -119,6 +119,13 @@ def export_migration_bundle(
             pass
 
     out_path = Path(output_zip_path).expanduser().resolve()
+    if out_path.is_dir() or str(output_zip_path).rstrip().endswith(("/", "\\")):
+        out_path.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_path = out_path / f"antigravity_migration_{ts}.zip"
+    elif not out_path.name.lower().endswith(".zip"):
+        out_path = out_path.with_name(out_path.name + ".zip")
+        
     out_path.parent.mkdir(parents=True, exist_ok=True)
     
     report(f"Packaging archive to {out_path.name}...", 0.15)
@@ -144,28 +151,46 @@ def export_migration_bundle(
                 if file.endswith((".py", ".md", ".json")) and "__pycache__" not in root:
                     src_file = os.path.join(root, file)
                     rel_to_module = os.path.relpath(src_file, ROOT_DIR)
-                    zipf.write(src_file, rel_to_module)
+                    try:
+                        zipf.write(src_file, rel_to_module)
+                    except Exception:
+                        pass
                     
         # Write root launchers
         restore_py_path = ROOT_DIR / "restore.py"
         if restore_py_path.exists():
-            zipf.write(restore_py_path, "restore.py")
+            try:
+                zipf.write(restore_py_path, "restore.py")
+            except Exception:
+                pass
             
         restore_sh_path = ROOT_DIR / "restore.sh"
         if restore_sh_path.exists():
-            zipf.write(restore_sh_path, "restore.sh")
+            try:
+                zipf.write(restore_sh_path, "restore.sh")
+            except Exception:
+                pass
             
         restore_bat_path = ROOT_DIR / "restore.bat"
         if restore_bat_path.exists():
-            zipf.write(restore_bat_path, "restore.bat")
+            try:
+                zipf.write(restore_bat_path, "restore.bat")
+            except Exception:
+                pass
             
         restore_desktop_path = ROOT_DIR / "restore.desktop"
         if restore_desktop_path.exists():
-            zipf.write(restore_desktop_path, "restore.desktop")
+            try:
+                zipf.write(restore_desktop_path, "restore.desktop")
+            except Exception:
+                pass
             
         restore_exe_path = ROOT_DIR / "dist" / "restore.exe"
         if restore_exe_path.exists():
-            zipf.write(restore_exe_path, "restore.exe")
+            try:
+                zipf.write(restore_exe_path, "restore.exe")
+            except Exception:
+                pass
             
         # 3. Package Global Configurations
         report("Packaging global configurations & rules...", 0.30)
@@ -178,7 +203,10 @@ def export_migration_bundle(
                     continue
                 for f in files:
                     full_p = os.path.join(root, f)
-                    zipf.write(full_p, os.path.join("config", rel, f) if rel != "." else os.path.join("config", f))
+                    try:
+                        zipf.write(full_p, os.path.join("config", rel, f) if rel != "." else os.path.join("config", f))
+                    except Exception:
+                        pass
                     
         # Package MCP schemas if present in antigravity/mcp
         mcp_dir = Path(paths["antigravity"]) / "mcp"
@@ -187,13 +215,19 @@ def export_migration_bundle(
                 rel = os.path.relpath(root, mcp_dir)
                 for f in files:
                     full_p = os.path.join(root, f)
-                    zipf.write(full_p, os.path.join("mcp", rel, f) if rel != "." else os.path.join("mcp", f))
+                    try:
+                        zipf.write(full_p, os.path.join("mcp", rel, f) if rel != "." else os.path.join("mcp", f))
+                    except Exception:
+                        pass
                     
         # 4. Package Project JSON definitions
         for pid in pids_to_export:
             pjson_path = Path(paths["projects"]) / f"{pid}.json"
             if pjson_path.exists():
-                zipf.write(pjson_path, f"projects/{pid}.json")
+                try:
+                    zipf.write(pjson_path, f"projects/{pid}.json")
+                except Exception:
+                    pass
                 
         # 5. Package Conversations
         report(f"Packaging {len(cids_to_export)} conversation histories...", 0.40)
@@ -204,16 +238,25 @@ def export_migration_bundle(
             # Database
             db_file = Path(paths["conversations"]) / f"{cid}.db"
             if db_file.exists():
-                zipf.write(db_file, f"chats/conversations/{cid}.db")
+                try:
+                    zipf.write(db_file, f"chats/conversations/{cid}.db")
+                except Exception:
+                    pass
                 
             # Annotation
             annot_file = Path(paths["annotations"]) / f"{cid}.pbtxt"
             if annot_file.exists():
-                zipf.write(annot_file, f"chats/annotations/{cid}.pbtxt")
+                try:
+                    zipf.write(annot_file, f"chats/annotations/{cid}.pbtxt")
+                except Exception:
+                    pass
                 
             # Raw summary binary blob
             if cid in raw_summaries:
-                zipf.writestr(f"chats/raw_summaries/{cid}.bin", raw_summaries[cid])
+                try:
+                    zipf.writestr(f"chats/raw_summaries/{cid}.bin", raw_summaries[cid])
+                except Exception:
+                    pass
                 
             # Brain folder
             brain_dir = Path(paths["brain"]) / cid
@@ -223,7 +266,10 @@ def export_migration_bundle(
                     for f in files:
                         full_p = os.path.join(root, f)
                         zip_rel = os.path.join(f"chats/brain/{cid}", rel, f) if rel != "." else os.path.join(f"chats/brain/{cid}", f)
-                        zipf.write(full_p, zip_rel)
+                        try:
+                            zipf.write(full_p, zip_rel)
+                        except Exception:
+                            pass
 
         # 6. Package Workspaces & Local Project Configs
         if mode == "automated":
