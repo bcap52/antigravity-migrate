@@ -17,6 +17,7 @@ from typing import Dict, List, Any, Optional, Callable
 from .discover import discover_all, get_default_paths
 from .os_detector import detect_system, TARGET_OS_OPTIONS
 from .mcp_auditor import audit_mcp_config
+from .embedded_restorer import inject_restorer_files
 
 MODULE_DIR = Path(__file__).resolve().parent
 ROOT_DIR = MODULE_DIR.parent
@@ -144,53 +145,7 @@ def export_migration_bundle(
         
         # 2. Bundle Restorer Code into zip root
         report("Bundling portable self-contained restorer...", 0.20)
-        
-        # Copy antigravity_migrate module package files
-        for root, dirs, files in os.walk(MODULE_DIR):
-            for file in files:
-                if file.endswith((".py", ".md", ".json")) and "__pycache__" not in root:
-                    src_file = os.path.join(root, file)
-                    rel_to_module = os.path.relpath(src_file, ROOT_DIR)
-                    try:
-                        zipf.write(src_file, rel_to_module)
-                    except Exception:
-                        pass
-                    
-        # Write root launchers
-        restore_py_path = ROOT_DIR / "restore.py"
-        if restore_py_path.exists():
-            try:
-                zipf.write(restore_py_path, "restore.py")
-            except Exception:
-                pass
-            
-        restore_sh_path = ROOT_DIR / "restore.sh"
-        if restore_sh_path.exists():
-            try:
-                zipf.write(restore_sh_path, "restore.sh")
-            except Exception:
-                pass
-            
-        restore_bat_path = ROOT_DIR / "restore.bat"
-        if restore_bat_path.exists():
-            try:
-                zipf.write(restore_bat_path, "restore.bat")
-            except Exception:
-                pass
-            
-        restore_desktop_path = ROOT_DIR / "restore.desktop"
-        if restore_desktop_path.exists():
-            try:
-                zipf.write(restore_desktop_path, "restore.desktop")
-            except Exception:
-                pass
-            
-        restore_exe_path = ROOT_DIR / "dist" / "restore.exe"
-        if restore_exe_path.exists():
-            try:
-                zipf.write(restore_exe_path, "restore.exe")
-            except Exception:
-                pass
+        inject_restorer_files(zipf, root_dir_fallback=ROOT_DIR)
             
         # 3. Package Global Configurations
         report("Packaging global configurations & rules...", 0.30)

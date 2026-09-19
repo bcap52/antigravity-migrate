@@ -53,11 +53,7 @@ def run_restoration(
     sum_db = antigravity_dir / "conversation_summaries.db"
     agy_pb = antigravity_dir / "agyhub_summaries_proto.pb"
     
-    # 1. Process Safety Guard
-    if interactive and not skip_process_check:
-        ensure_safe_to_modify(interactive=True)
-        
-    # 2. OS & Distro Detection
+    # 1. OS & Distro Detection & Cross-Check
     target_sys = detect_system()
     source_sys = manifest.get("source_system", {})
     target_intent = manifest.get("target_intent", {})
@@ -65,12 +61,46 @@ def run_restoration(
     print("\n" + "=" * 75)
     print(" ANTIGRAVITY RESTORATION ENGINE")
     print("=" * 75)
-    print(f" Source OS: {source_sys.get('distro_name', source_sys.get('os', 'Unknown'))}")
-    print(f" Target OS: {target_sys.get('distro_name', target_sys.get('os', 'Unknown'))}")
+    print(f" Source OS       : {source_sys.get('distro_name', source_sys.get('os', 'Unknown'))}")
+    print(f" Expected Target : {target_intent.get('label', target_intent.get('os', 'Unknown'))}")
+    print(f" Current Machine : {target_sys.get('distro_name', target_sys.get('os', 'Unknown'))} ({target_sys.get('family', 'unknown')})")
     
     xref = cross_reference_target(target_intent, target_sys)
-    print(f" OS Compatibility: [{xref['status'].upper()}] {xref['message']}")
+    
+    if xref["status"] == "mismatch":
+        print("\n" + "!" * 75)
+        print(" [ERROR] OPERATING SYSTEM MISMATCH DETECTED!".center(75))
+        print("!" * 75)
+        print(f" Expected Target OS : {target_intent.get('label', target_intent.get('os', 'Unknown'))}")
+        print(f" Current Machine    : {target_sys.get('distro_name', target_sys.get('os', 'Unknown'))}")
+        print("-" * 75)
+        print(f" Details: {xref['message']}")
+        print("\n Why this fails:")
+        print(" This migration bundle was exported specifically for the target OS selected at export time.")
+        print(" Restoring on a different OS (e.g. Windows on Linux, or Linux on Windows)")
+        print(" will apply incompatible filesystem paths and corrupt Antigravity project registrations.")
+        print("!" * 75)
+        
+        if interactive:
+            confirm = input("\nDo you want to override and force restore anyway? [y/N]: ").strip().lower()
+            if confirm not in ("y", "yes"):
+                print("\n [!] Restoration cancelled due to OS mismatch.")
+                try:
+                    input("\nPress Enter to exit...")
+                except Exception:
+                    pass
+                sys.exit(1)
+        else:
+            raise RuntimeError(f"Target OS mismatch: Expected {target_intent.get('label')}, but detected {target_sys.get('distro_name')}.")
+    elif xref["status"] == "compatible":
+        print(f" OS Compatibility: [COMPATIBLE] {xref['message']}")
+    else:
+        print(f" OS Compatibility: [MATCH] Target system matches intended OS ({target_sys.get('distro_name', 'Linux')}). Proceeding...")
     print("-" * 75)
+
+    # 2. Process Safety Guard
+    if interactive and not skip_process_check:
+        ensure_safe_to_modify(interactive=True)
 
     # 3. Restore Global Configurations & MCPs
     print("\n [1/5] Restoring Global Configurations & Rules...")

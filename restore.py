@@ -15,7 +15,8 @@ from antigravity_migrate.restorer import run_restoration
 
 def main():
     archive_dir = str(BUNDLE_DIR)
-    run_restoration(archive_dir_str=archive_dir, interactive=True)
+    interactive = "--non-interactive" not in sys.argv
+    run_restoration(archive_dir_str=archive_dir, interactive=interactive)
 
 if __name__ == "__main__":
     main()
