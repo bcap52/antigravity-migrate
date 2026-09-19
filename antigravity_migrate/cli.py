@@ -7,6 +7,7 @@ progress reporting, and selective migration menus.
 import os
 import sys
 import argparse
+import platform
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -181,46 +182,50 @@ def run_export_wizard():
         pass
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Antigravity Migrate: Cross-Platform Chat, Config & Workspace Porter"
-    )
-    subparsers = parser.add_subparsers(dest="command", help="Commands")
-    
-    # Export subparser
-    exp_parser = subparsers.add_parser("export", help="Export Antigravity chats, configs, and workspaces")
-    exp_parser.add_argument("-o", "--output", help="Output .zip path")
-    exp_parser.add_argument("-m", "--mode", choices=["automated", "manual", "config_only"], default=None)
-    
-    # Restore subparser
-    res_parser = subparsers.add_parser("restore", help="Restore Antigravity bundle on target machine")
-    res_parser.add_argument("-a", "--archive-dir", default=".", help="Directory of unzipped bundle")
-    res_parser.add_argument("--non-interactive", action="store_true", help="Run without interactive prompts")
-    
-    # Check subparser
-    chk_parser = subparsers.add_parser("check", help="Run health check and verification on local Antigravity store")
-    chk_parser.add_argument("--repair", action="store_true", help="Auto-repair detected discrepancies")
-    
-    args = parser.parse_args()
-    
-    if args.command == "export":
-        if args.output:
-            export_migration_bundle(output_zip_path=args.output, mode=args.mode or "automated")
+    try:
+        parser = argparse.ArgumentParser(
+            description="Antigravity Migrate: Cross-Platform Chat, Config & Workspace Porter"
+        )
+        subparsers = parser.add_subparsers(dest="command", help="Commands")
+        
+        # Export subparser
+        exp_parser = subparsers.add_parser("export", help="Export Antigravity chats, configs, and workspaces")
+        exp_parser.add_argument("-o", "--output", help="Output .zip path")
+        exp_parser.add_argument("-m", "--mode", choices=["automated", "manual", "config_only"], default=None)
+        
+        # Restore subparser
+        res_parser = subparsers.add_parser("restore", help="Restore Antigravity bundle on target machine")
+        res_parser.add_argument("-a", "--archive-dir", default=".", help="Directory of unzipped bundle")
+        res_parser.add_argument("--non-interactive", action="store_true", help="Run without interactive prompts")
+        
+        # Check subparser
+        chk_parser = subparsers.add_parser("check", help="Run health check and verification on local Antigravity store")
+        chk_parser.add_argument("--repair", action="store_true", help="Auto-repair detected discrepancies")
+        
+        args = parser.parse_args()
+        
+        if args.command == "export":
+            if args.output:
+                export_migration_bundle(output_zip_path=args.output, mode=args.mode or "automated")
+            else:
+                run_export_wizard()
+        elif args.command == "restore":
+            run_restoration(archive_dir_str=args.archive_dir, interactive=not args.non_interactive)
+        elif args.command == "check":
+            print(BANNER)
+            print(" Running local Antigravity integrity verification...")
+            res = run_validation_suite(gemini_dir_str=str(Path.home() / ".gemini"), auto_repair=args.repair)
+            for g in res["gates"]:
+                st = "[PASS]" if g["passed"] else "[FAIL]"
+                rep = " (AUTO-REPAIRED)" if g.get("repaired") else ""
+                print(f"  {st}{rep} {g['name']:25}: {g['message']}")
+            print(f"\n Score: {res['passed_gates']}/{res['total_gates']} passed.")
         else:
+            # Default interactive menu
             run_export_wizard()
-    elif args.command == "restore":
-        run_restoration(archive_dir_str=args.archive_dir, interactive=not args.non_interactive)
-    elif args.command == "check":
-        print(BANNER)
-        print(" Running local Antigravity integrity verification...")
-        res = run_validation_suite(gemini_dir_str=str(Path.home() / ".gemini"), auto_repair=args.repair)
-        for g in res["gates"]:
-            st = "[PASS]" if g["passed"] else "[FAIL]"
-            rep = " (AUTO-REPAIRED)" if g.get("repaired") else ""
-            print(f"  {st}{rep} {g['name']:25}: {g['message']}")
-        print(f"\n Score: {res['passed_gates']}/{res['total_gates']} passed.")
-    else:
-        # Default interactive menu
-        run_export_wizard()
+    except (KeyboardInterrupt, EOFError):
+        print("\n\n [!] Operation cancelled. Exiting.")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
