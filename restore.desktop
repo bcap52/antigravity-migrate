@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Antigravity Restorer
+Comment=One-Click Restorer for Google Antigravity Chats and Configurations
+Exec=bash -c 'cd "$(dirname "%k")" && ./restore.sh'
+Icon=system-software-update
+Terminal=true
+Categories=Utility;Development;
+StartupNotify=true

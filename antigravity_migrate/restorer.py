@@ -374,6 +374,12 @@ def run_restoration(
         print("\n [!] Some validation gates reported warnings. Review details above.")
     print("=" * 75)
     
+    if interactive:
+        try:
+            input("\nPress Enter to exit...")
+        except Exception:
+            pass
+            
     return {
         "success": val_report["success"],
         "restored_chats": restored_chats,

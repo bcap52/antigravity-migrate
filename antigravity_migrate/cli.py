@@ -171,11 +171,14 @@ def run_export_wizard():
     print(f" [SUCCESS] Migration archive created successfully!")
     print(f" File Location : {res['archive_path']}")
     print(f" Archive Size  : {res['archive_size_mb']:.2f} MB")
-    print(f" Included      : {res['conversations_count']} Chats, {res['projects_count']} Projects, Configs & Restorer")
     print("\n Transfer this .zip to your target machine, extract it, and run:")
     print("   ./restore.sh    (on Linux)")
     print("   restore.bat     (on Windows)")
     print("=" * 80)
+    try:
+        input("\nPress Enter to exit...")
+    except Exception:
+        pass
 
 def main():
     parser = argparse.ArgumentParser(

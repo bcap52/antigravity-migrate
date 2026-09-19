@@ -159,6 +159,14 @@ def export_migration_bundle(
         if restore_bat_path.exists():
             zipf.write(restore_bat_path, "restore.bat")
             
+        restore_desktop_path = ROOT_DIR / "restore.desktop"
+        if restore_desktop_path.exists():
+            zipf.write(restore_desktop_path, "restore.desktop")
+            
+        restore_exe_path = ROOT_DIR / "dist" / "restore.exe"
+        if restore_exe_path.exists():
+            zipf.write(restore_exe_path, "restore.exe")
+            
         # 3. Package Global Configurations
         report("Packaging global configurations & rules...", 0.30)
         config_dir = Path(paths["config"])
