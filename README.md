@@ -1,6 +1,6 @@
 # antigravity-migrate
 
-A lightweight, zero-dependency tool to migrate Google Antigravity chat histories, configurations, skills (global, plugin, and project-level), MCP servers, and project workspaces between machines and operating systems (Windows and Linux — Arch, CachyOS, Debian/Ubuntu, Fedora, etc.).
+Tool to migrate Google Antigravity chat histories, configurations, skills (global, plugin, and project-level), MCP servers, and project workspaces between machines and operating systems (Windows and Linux — Arch, CachyOS, Debian/Ubuntu, Fedora, etc.).
 
 It automatically handles path translations (`file:///C:/...` ↔ `file:///home/...`), syncs binary protobuf summaries (`agyhub_summaries_proto.pb`) with SQLite databases so chats immediately appear in sidebar projects, audits MCP environment variables, and validates migration integrity with zero external Python dependencies.
 
